@@ -1,7 +1,6 @@
 # Hyll
 
 [![Build Status](https://github.com/davidesantangelo/hyll/workflows/Ruby%20Tests/badge.svg)](https://github.com/davidesantangelo/hyll/actions)
-[![Maintainability](https://api.codeclimate.com/v1/badges/a99a88d28ad37a79dbf6/maintainability)](https://codeclimate.com/github/davidesantangelo/hyll/maintainability)
 
 Hyll is a Ruby implementation of the [HyperLogLog algorithm](https://en.wikipedia.org/wiki/HyperLogLog) for the count-distinct problem, which efficiently approximates the number of distinct elements in a multiset with minimal memory usage.
 

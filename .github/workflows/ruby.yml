@@ -1,0 +1,65 @@
+name: Ruby Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Ruby
+      run: |
+        # For self-hosted runners without sudo permissions, install in user directory
+        export USER_DIR="$HOME/.local"
+        export RUBY_DIR="$USER_DIR/ruby/3.1.0"
+        mkdir -p "$USER_DIR/bin"
+        
+        # Check if Ruby is already installed
+        if [ -d "$RUBY_DIR" ]; then
+          echo "Ruby 3.1.0 is already installed"
+        else
+          echo "Installing Ruby 3.1.0..."
+          
+          # Install ruby-build to user directory
+          if [ ! -f "$USER_DIR/bin/ruby-build" ]; then
+            echo "Installing ruby-build in user directory..."
+            git clone https://github.com/rbenv/ruby-build.git
+            cd ruby-build
+            
+            # Install to user directory instead of /usr/local
+            PREFIX="$USER_DIR" ./install.sh
+            cd ..
+            rm -rf ruby-build
+          fi
+          
+          # Create Ruby installation directory
+          mkdir -p "$RUBY_DIR"
+          
+          # Add user bin directory to PATH
+          export PATH="$USER_DIR/bin:$PATH"
+          
+          # Install Ruby
+          "$USER_DIR/bin/ruby-build" 3.1.0 "$RUBY_DIR"
+        fi
+        
+        # Add Ruby to PATH for subsequent steps
+        echo "$RUBY_DIR/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        # Ensure gems are installed in user directory to avoid permission issues
+        export GEM_HOME="$HOME/.gem"
+        export PATH="$GEM_HOME/bin:$PATH"
+        echo "$GEM_HOME/bin" >> $GITHUB_PATH
+        
+        gem install bundler
+        bundle config set --local path vendor/bundle
+        bundle install
+
+    - name: Run tests
+      run: bundle exec rspec

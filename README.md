@@ -172,8 +172,7 @@ The algorithm provides a trade-off between memory usage and accuracy:
 
 ![hll](https://github.com/user-attachments/assets/6cb4431e-1e97-4493-a7eb-db4a31797425)
 
-> This chart visualizes the relationship between precision values in HyperLogLog and the theoretical error rates. HyperLogLog is a probabilistic algorithm used for cardinality estimation with a typical error of 1.04/√m, where m is the number of registers (2^precision).
-
+> This chart visualizes the relationship between precision values in HyperLogLog and the theoretical error rates. HyperLogLog is a probabilistic algorithm used for cardinality estimation with a typical error of **1.04/√m** (or **1.04·m⁻¹/²**), where **m = 2^precision** is the number of registers.
 
 ## Performance Comparison
 

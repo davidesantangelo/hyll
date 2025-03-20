@@ -170,6 +170,11 @@ The algorithm provides a trade-off between memory usage and accuracy:
 - Medium precision (7-11): Uses moderate memory with reasonable error rates (3-10%)
 - Higher precision (12-16): Uses more memory with better accuracy (<3%)
 
+![hll](https://github.com/user-attachments/assets/6cb4431e-1e97-4493-a7eb-db4a31797425)
+
+> This chart visualizes the relationship between precision values in HyperLogLog and the theoretical error rates. HyperLogLog is a probabilistic algorithm used for cardinality estimation with a typical error of 1.04/√m, where m is the number of registers (2^precision).
+
+
 ## Performance Comparison
 
 This table compares different configurations of the HyperLogLog algorithm:

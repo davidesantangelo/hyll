@@ -249,6 +249,44 @@ The internal architecture follows a modular approach:
 - `Hyll::P4HyperLogLog`: The Presto-compatible implementation
 - `Hyll::Factory`: Factory pattern for creating counters
 
+## Examples
+
+A basic examples file has been created to demonstrate how to use Hyll:
+
+```ruby
+# examples/basic.rb
+require 'hyll'
+
+# Create a new HyperLogLog counter
+counter = Hyll::HyperLogLog.new
+
+# Add some elements
+1000.times { |i| counter.add(i) }
+
+# Get the cardinality estimate
+puts "Estimated cardinality: #{counter.count}"
+
+# Using Maximum Likelihood Estimation (often more accurate)
+puts "MLE cardinality: #{counter.mle_cardinality}"
+```
+
+For a comprehensive overview of all features, see `examples/basic.rb` which includes:
+- Basic counting
+- Custom precision settings
+- Merging counters
+- Serialization
+- P4HyperLogLog usage
+- Batch operations
+- Large dataset handling
+- Set operations
+
+For advanced usage scenarios, check out `examples/advance.rb` which includes:
+- Set intersection estimation
+- Working with custom data types
+- Time-window based cardinality monitoring
+- Advanced serialization techniques
+- Precision vs. memory usage benchmarks
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.

@@ -251,8 +251,8 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 ## References and Acknowledgements
 
-- Original HyperLogLog paper: "HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm" by Philippe Flajolet, Éric Fusy, Olivier Gandouet, and Frédéric Meunier (2007).
-- Improved bias correction: "HyperLogLog in Practice: Algorithmic Engineering of a State of the Art Cardinality Estimation Algorithm" by Stefan Heule, Marc Nunkesser, and Alexander Hall (2013).
+- Original HyperLogLog paper: ["HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm"](https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) by Philippe Flajolet, Éric Fusy, Olivier Gandouet, and Frédéric Meunier (2007).
+- Improved bias correction: ["HyperLogLog in Practice: Algorithmic Engineering of a State of the Art Cardinality Estimation Algorithm"](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/40671.pdf) by Stefan Heule, Marc Nunkesser, and Alexander Hall (2013).
 - Facebook's Presto implementation details: ["HyperLogLog in Presto: A significantly faster way to handle cardinality estimation"](https://engineering.fb.com/2018/12/13/data-infrastructure/hyperloglog/) by Mehrdad Honarkhah and Arya Talebzadeh.
 
 ## Contributing

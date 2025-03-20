@@ -15,7 +15,6 @@ module Hyll
       # Flag to track if this was converted from standard format
       @converted_from_standard = false
 
-      # Track if this has been merged
       @was_merged = false
     end
 
@@ -25,15 +24,10 @@ module Hyll
     def add(element)
       add_to_registers(element)
 
-      # Reset conversion flag when adding new elements
       @converted_from_standard = false
 
       # Sequential detection for integers
-      if element.is_a?(Integer)
-        @last_values << element
-        @last_values.shift if @last_values.size > 10
-        detect_sequential if @last_values.size == 10
-      end
+      handle_sequential_detection(element)
 
       self
     end
@@ -44,7 +38,6 @@ module Hyll
       return unless value > current_value
 
       @registers[index] = value
-      # Reset conversion flag when registers change
       @converted_from_standard = false
     end
 
@@ -60,17 +53,7 @@ module Hyll
       hll.switch_to_dense_format
 
       # Copy registers
-      @m.times do |i|
-        value = @registers[i]
-        delta = value - hll.instance_variable_get(:@baseline)
-
-        if delta <= MAX_4BIT_VALUE
-          hll.send(:set_register_value, i, delta)
-        else
-          hll.send(:set_register_value, i, MAX_4BIT_VALUE)
-          hll.instance_variable_get(:@overflow)[i] = delta
-        end
-      end
+      copy_registers_to_standard_hll(hll)
 
       hll.instance_variable_set(:@is_sequential, @is_sequential)
       hll
@@ -117,38 +100,19 @@ module Hyll
     # @param other [HyperLogLog] the other HyperLogLog counter
     # @return [P4HyperLogLog] self
     def merge(other)
-      if @precision != other.instance_variable_get(:@precision)
-        raise Error,
-              "Cannot merge HyperLogLog counters with different precision"
-      end
+      validate_precision(other)
 
-      # Reset conversion flag
       @converted_from_standard = false
       @was_merged = true
 
-      # If the other HLL is using exact counting, add its elements
       if other.instance_variable_get(:@using_exact_counting)
-        other_small = other.instance_variable_get(:@small_set)
-        other_small.each_key { |e| add_to_registers(e) }
+        merge_exact_counting(other)
       else
-        # Take the maximum value for each register
-        @m.times do |i|
-          other_value = if other.is_a?(P4HyperLogLog)
-                          other.instance_variable_get(:@registers)[i]
-                        else
-                          other.send(:get_register_value, i)
-                        end
-
-          @registers[i] = [other_value, @registers[i]].max
-        end
+        merge_dense_registers(other)
       end
 
-      # Combine sequential flags
-      @is_sequential ||= other.instance_variable_get(:@is_sequential)
-
-      # Apply special correction for large merges
-      nonzero_count = @registers.count(&:positive?)
-      @is_sequential = true if nonzero_count > @m * 0.7
+      # Update sequential flag
+      update_sequential_flag(other)
 
       self
     end
@@ -156,32 +120,103 @@ module Hyll
     # Override cardinality for better merge results
     # @return [Float] the estimated cardinality
     def cardinality
-      # Create a compatible register structure for the standard HLL algorithm
-      @m.times do |i|
-        # If register value is 0, ensure we don't change it
-        next if @registers[i].zero?
-
-        # We might need to reduce register values to match standard HLL behavior
-        if @converted_from_standard
-          # No adjustment needed
-        elsif @was_merged
-          # For merged P4HLL, slight adjustment down
-          @registers[i] = [@registers[i] - 1, 1].max if @registers[i] > 1
-        elsif @registers[i] > 1
-          @registers[i] = (@registers[i] * 0.78).to_i
-        end
-        # For native P4HLL, reduce register values to match standard HLL behavior
-      end
+      adjust_register_values_for_cardinality_estimation
 
       result = super
 
-      # For specific cases, apply correction
       if @was_merged && result > 800
         # Merges that resulted in near 1000 cardinality tend to overestimate by ~25%
         result *= 0.79
       end
 
       result
+    end
+
+    private
+
+    # Handle sequential detection for integer elements
+    def handle_sequential_detection(element)
+      return unless element.is_a?(Integer)
+
+      @last_values ||= []
+      @last_values << element
+      @last_values.shift if @last_values.size > 10
+      detect_sequential if @last_values.size == 10
+    end
+
+    # Copy registers to a standard HLL instance
+    def copy_registers_to_standard_hll(hll)
+      @m.times do |i|
+        value = @registers[i]
+        baseline = hll.instance_variable_get(:@baseline)
+        delta = value - baseline
+
+        overflow = hll.instance_variable_get(:@overflow)
+        max_4bit_value = self.class.const_get(:MAX_4BIT_VALUE)
+
+        if delta <= max_4bit_value
+          hll.send(:set_register_value, i, delta)
+        else
+          hll.send(:set_register_value, i, max_4bit_value)
+          overflow[i] = delta
+        end
+      end
+    end
+
+    # Validate precision between two HyperLogLog instances
+    def validate_precision(other)
+      return unless @precision != other.instance_variable_get(:@precision)
+
+      raise Error,
+            "Cannot merge HyperLogLog counters with different precision"
+    end
+
+    # Merge from an HLL using exact counting mode
+    def merge_exact_counting(other)
+      other_small = other.instance_variable_get(:@small_set)
+      other_small.each_key { |e| add_to_registers(e) }
+    end
+
+    # Merge from an HLL using dense registers
+    def merge_dense_registers(other)
+      @m.times do |i|
+        other_value = extract_other_register_value(other, i)
+        @registers[i] = [other_value, @registers[i]].max
+      end
+    end
+
+    # Extract register value from other HLL
+    def extract_other_register_value(other, index)
+      if other.is_a?(P4HyperLogLog)
+        other.instance_variable_get(:@registers)[index]
+      else
+        other.send(:get_register_value, index)
+      end
+    end
+
+    # Update sequential flag based on merge results
+    def update_sequential_flag(other)
+      # Combine sequential flags
+      @is_sequential ||= other.instance_variable_get(:@is_sequential)
+
+      # Apply special correction for large merges
+      nonzero_count = @registers.count(&:positive?)
+      @is_sequential = true if nonzero_count > @m * 0.7
+    end
+
+    # Adjust register values for cardinality estimation
+    def adjust_register_values_for_cardinality_estimation
+      @m.times do |i|
+        next if @registers[i].zero?
+
+        if @converted_from_standard
+          # No adjustment needed
+        elsif @was_merged && @registers[i] > 1
+          @registers[i] = [@registers[i] - 1, 1].max
+        elsif @registers[i] > 1
+          @registers[i] = (@registers[i] * 0.78).to_i
+        end
+      end
     end
   end
 end

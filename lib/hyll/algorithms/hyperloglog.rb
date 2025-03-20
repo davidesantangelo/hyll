@@ -419,57 +419,84 @@ module Hyll
     end
 
     # Helper to merge HLL registers
+    # @param other [HyperLogLog] the other HyperLogLog counter
     # @private
     def merge_registers(other)
       # Ensure we're in dense format
       switch_to_dense_format if @using_exact_counting
 
-      # Ensure other is in dense format if it's a standard HyperLogLog
-      if other.is_a?(HyperLogLog) && !other.is_a?(P4HyperLogLog) && other.instance_variable_get(:@using_exact_counting)
-        other_small = other.instance_variable_get(:@small_set)
-        other_small.each_key { |e| add_to_registers(e) }
+      # Handle case where other is a standard HyperLogLog in exact counting mode
+      if other.is_a?(HyperLogLog) &&
+         !other.is_a?(P4HyperLogLog) &&
+         other.instance_variable_get(:@using_exact_counting)
+
+        other_small_set = other.instance_variable_get(:@small_set)
+        other_small_set.each_key { |element| add_to_registers(element) }
         return
       end
 
       # Take the maximum value for each register
       @m.times do |i|
-        other_value = if other.is_a?(P4HyperLogLog)
-                        other.instance_variable_get(:@registers)[i]
-                      else
-                        other.send(:get_register_value, i)
-                      end
-
+        other_value = get_other_register_value(other, i)
         current_value = get_register_value(i)
 
         next unless other_value > current_value
 
-        # Need to update our register
-        delta = other_value - @baseline
-        if delta <= MAX_4BIT_VALUE
-          set_register_value(i, delta)
-        else
-          set_register_value(i, MAX_4BIT_VALUE)
-          @overflow[i] = delta
-        end
+        # Update our register with the larger value
+        update_register_from_other(i, other_value)
       end
 
+      update_sequential_flag(other)
+    end
+
+    # Helper method to get register value from other HLL
+    # @private
+    def get_other_register_value(other, index)
+      if other.is_a?(P4HyperLogLog)
+        other.instance_variable_get(:@registers)[index]
+      else
+        other.send(:get_register_value, index)
+      end
+    end
+
+    # Helper method to update register with value from other HLL
+    # @private
+    def update_register_from_other(index, other_value)
+      delta = other_value - @baseline
+
+      if delta <= MAX_4BIT_VALUE
+        set_register_value(index, delta)
+      else
+        set_register_value(index, MAX_4BIT_VALUE)
+        @overflow[index] = delta
+      end
+    end
+
+    # Helper method to update sequential flag based on merge results
+    # @private
+    def update_sequential_flag(other)
       # Combine sequential flags
       @is_sequential ||= other.instance_variable_get(:@is_sequential)
 
       # Force sequential detection after merging large sets with special handling for stress tests
-      nonzero_registers = 0
-      @m.times do |i|
-        nonzero_registers += 1 if get_register_value(i).positive?
-      end
+      nonzero_registers = count_nonzero_registers
 
       # If more than 70% of registers are non-zero after merging,
       # this is a strong indicator of potentially sequential data or high cardinality
       @is_sequential = true if nonzero_registers > @m * 0.7
 
       # Special case for merging HLLs in stress tests
-      return unless nonzero_registers > 1000 && @m == 1024 # For precision 10 (used in stress tests)
+      @is_sequential = true if nonzero_registers > 1000 && @m == 1024 # For precision 10 (used in stress tests)
+    end
 
-      @is_sequential = true
+    # Count non-zero registers
+    # @private
+    def count_nonzero_registers
+      nonzero_count = 0
+      @m.times do |i|
+        nonzero_count += 1 if get_register_value(i).positive?
+      end
+      nonzero_count
     end
 
     # Reset the HyperLogLog counter

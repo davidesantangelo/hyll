@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Davide Santangelo"]
   spec.email = ["davide.santangelo@gmail.com"]
 
-  spec.summary = "A Ruby implementation of the HyperLogLog algorithm for cardinality estimation"
-  spec.description = "HyperLogLog is an algorithm for the count-distinct problem, approximating the number of distinct elements in a multiset with minimal memory usage."
+  spec.summary = "A fast, memory-efficient Ruby implementation of HyperLogLog for counting unique elements in large datasets"
+  spec.description = "Hyll provides a robust implementation of the HyperLogLog algorithm, enabling highly accurate cardinality estimation (counting unique items) with minimal memory footprint. Perfect for analytics, databases, and stream processing where tracking distinct elements in large datasets is required. This implementation offers configurable precision and serialization support."
   spec.homepage = "https://github.com/davidesantangelo/hyll"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"

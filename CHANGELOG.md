@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2025-03-22
+## [0.1.0] - 2025-03-21
 
 ### Added
 - Initial implementation of HyperLogLog algorithm
@@ -28,9 +28,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Factory method `empty` for creating empty counters
   - Format conversion methods `to_enhanced` and `to_hll`
 - Comprehensive test suite with edge case handling
-
-## About the Release Date
-
-This first release honors the memory of Philippe Flajolet (1948-2011), the brilliant computer scientist who invented the HyperLogLog algorithm. Flajolet died on March 22, 2011. His pioneering work in probabilistic algorithms and analytic combinatorics revolutionized the way we deal with cardinality estimation problems in large data sets.
-
-The HyperLogLog algorithm he created (along with co-authors) allows us to count distinct elements in massive datasets with minimal memory requirements, making previously impossible computations feasible.

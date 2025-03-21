@@ -38,7 +38,7 @@ def intersection_example
   total_items.times { |i| hll2.add("item-#{i + total_items - overlap}") }
 
   # Create union by merging (make copy first to avoid modifying original)
-  union = hll1.to_p4
+  union = hll1.to_enhanced
   union.merge(hll2)
 
   # Calculate intersection using inclusion-exclusion principle with standard estimates
@@ -211,11 +211,11 @@ def serialization_example
   puts "Retrieved cardinality: #{retrieved_hll.cardinality.round}"
   puts "\n"
 
-  # Convert to P4 format for interoperability
-  p4_hll = hll.to_p4
-  p4_binary = p4_hll.serialize
+  # Convert to enhanced format for interoperability
+  enhanced_hll = hll.to_enhanced
+  enhanced_binary = enhanced_hll.serialize
 
-  puts "P4 format serialized size: #{p4_binary.bytesize} bytes"
+  puts "Enhanced format serialized size: #{enhanced_binary.bytesize} bytes"
   puts "\n"
 end
 

@@ -7,12 +7,12 @@ RSpec.describe Hyll do
     it "creates a standard HyperLogLog by default" do
       hll = described_class.new
       expect(hll).to be_a(Hyll::HyperLogLog)
-      expect(hll).not_to be_a(Hyll::P4HyperLogLog)
+      expect(hll).not_to be_a(Hyll::EnhancedHyperLogLog)
     end
 
-    it "creates a P4HyperLogLog when specified" do
-      hll = described_class.new(type: :p4)
-      expect(hll).to be_a(Hyll::P4HyperLogLog)
+    it "creates a EnhancedHyperLogLog when specified" do
+      hll = described_class.new(type: :enhanced)
+      expect(hll).to be_a(Hyll::EnhancedHyperLogLog)
     end
 
     it "respects precision parameter" do
@@ -30,18 +30,18 @@ RSpec.describe Hyll do
       deserialized = described_class.deserialize(serialized)
 
       expect(deserialized).to be_a(Hyll::HyperLogLog)
-      expect(deserialized).not_to be_a(Hyll::P4HyperLogLog)
+      expect(deserialized).not_to be_a(Hyll::EnhancedHyperLogLog)
       expect(deserialized.cardinality).to be_within(1).of(original.cardinality)
     end
 
-    it "correctly deserializes P4HyperLogLog data" do
-      original = Hyll::P4HyperLogLog.new(10)
+    it "correctly deserializes EnhancedHyperLogLog data" do
+      original = Hyll::EnhancedHyperLogLog.new(10)
       (1..100).each { |i| original.add(i) }
 
       serialized = original.serialize
       deserialized = described_class.deserialize(serialized)
 
-      expect(deserialized).to be_a(Hyll::P4HyperLogLog)
+      expect(deserialized).to be_a(Hyll::EnhancedHyperLogLog)
       expect(deserialized.cardinality).to be_within(1).of(original.cardinality)
     end
   end

@@ -68,8 +68,8 @@ RSpec.describe "Serialization" do
     include_examples "serializable counter", :standard
   end
 
-  describe "P4HyperLogLog" do
-    include_examples "serializable counter", :p4
+  describe "EnhancedHyperLogLog" do
+    include_examples "serializable counter", :enhanced
   end
 
   it "produces deserialized counters that behave reasonably" do

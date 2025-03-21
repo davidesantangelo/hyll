@@ -81,21 +81,21 @@ puts "Original count: #{original.count}"
 puts "Deserialized count: #{deserialized.count}"
 puts "\n"
 
-# Example 7: Using P4HyperLogLog
-puts "Example 7: Using P4HyperLogLog"
-p4_counter = Hyll::P4HyperLogLog.new(10)
-10_000.times { |i| p4_counter.add(i) }
-puts "P4HyperLogLog count: #{p4_counter.count}"
+# Example 7: Using EnhancedHyperLogLog
+puts "Example 7: Using EnhancedHyperLogLog"
+enhanced_counter = Hyll::EnhancedHyperLogLog.new(10)
+10_000.times { |i| enhanced_counter.add(i) }
+puts "EnhancedHyperLogLog count: #{enhanced_counter.count}"
 
-# Convert standard HLL to P4HLL
+# Convert standard HLL to EnhancedHLL
 standard = Hyll::HyperLogLog.new(10)
 10_000.times { |i| standard.add(i) }
-p4_converted = standard.to_p4
-puts "Standard HLL converted to P4: #{p4_converted.count}"
+enhanced_converted = standard.to_enhanced
+puts "Standard HLL converted to Enhanced: #{enhanced_converted.count}"
 
-# Convert P4HLL back to standard HLL
-standard_again = p4_counter.to_hll
-puts "P4 converted back to standard: #{standard_again.count}"
+# Convert EnhancedHLL back to standard HLL
+standard_again = enhanced_counter.to_hll
+puts "Enhanced converted back to standard: #{standard_again.count}"
 puts "\n"
 
 # Example 8: Batch Adding
@@ -129,7 +129,7 @@ set_b = Hyll::HyperLogLog.new
 1000.times { |i| set_b.add("item-#{i + 500}") } # 500 overlapping items
 
 # Create a union set by merging
-union = set_a.to_p4 # Make a copy first
+union = set_a.to_enhanced # Make a copy first
 union.merge(set_b)
 
 # Estimate intersection using inclusion-exclusion principle

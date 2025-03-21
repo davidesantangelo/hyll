@@ -59,26 +59,26 @@ RSpec.describe "Estimation Methods" do
     it "provides estimates with both implementations" do
       # Create both types with same elements
       standard = Hyll.new(type: :standard, precision: precision)
-      p4 = Hyll.new(type: :p4, precision: precision)
+      enhanced = Hyll.new(type: :enhanced, precision: precision)
 
       count = 10_000
       elements = (1..count).map { |i| "shared-#{i}" }
       standard.add_all(elements)
-      p4.add_all(elements)
+      enhanced.add_all(elements)
 
       # Both should provide reasonable estimates
       expect(standard.cardinality).to be > 0
-      expect(p4.cardinality).to be > 0
+      expect(enhanced.cardinality).to be > 0
 
       # Implementations may vary, but should be within 0.1x to 10x of actual count
       expect(standard.cardinality).to be > count * 0.1
       expect(standard.cardinality).to be < count * 10
 
-      expect(p4.cardinality).to be > count * 0.1
-      expect(p4.cardinality).to be < count * 10
+      expect(enhanced.cardinality).to be > count * 0.1
+      expect(enhanced.cardinality).to be < count * 10
 
       # Print values for diagnostics
-      puts "Standard: #{standard.cardinality}, P4: #{p4.cardinality}, Actual: #{count}"
+      puts "Standard: #{standard.cardinality}, Enhanced: #{enhanced.cardinality}, Actual: #{count}"
     end
   end
 end

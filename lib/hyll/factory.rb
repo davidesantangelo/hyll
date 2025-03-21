@@ -4,15 +4,15 @@ module Hyll
   # Factory for creating HyperLogLog instances
   class Factory
     # Create a new HyperLogLog counter
-    # @param type [Symbol] the type of HyperLogLog counter to create (:standard or :p4)
+    # @param type [Symbol] the type of HyperLogLog counter to create (:standard or :enhanced)
     # @param precision [Integer] the precision to use
-    # @return [HyperLogLog, P4HyperLogLog] a HyperLogLog counter
+    # @return [HyperLogLog, EnhancedHyperLogLog] a HyperLogLog counter
     def self.create(type: :standard, precision: 10)
       case type
       when :standard, :hll
         HyperLogLog.new(precision)
-      when :p4, :presto
-        P4HyperLogLog.new(precision)
+      when :enhanced
+        EnhancedHyperLogLog.new(precision)
       else
         raise Error, "Unknown HyperLogLog type: #{type}"
       end
@@ -20,12 +20,12 @@ module Hyll
 
     # Create a HyperLogLog counter from serialized data
     # @param data [String] the serialized data
-    # @return [HyperLogLog, P4HyperLogLog] the deserialized counter
+    # @return [HyperLogLog, EnhancedHyperLogLog] the deserialized counter
     def self.from_serialized(data)
-      format_version, _, is_p4, = data.unpack("CCCC")
+      format_version, _, is_enhanced, = data.unpack("CCCC")
 
-      if format_version == 3 && is_p4 == 1
-        P4HyperLogLog.deserialize(data)
+      if format_version == 3 && is_enhanced == 1
+        EnhancedHyperLogLog.deserialize(data)
       else
         HyperLogLog.deserialize(data)
       end

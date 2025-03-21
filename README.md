@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/davidesantangelo/hyll/workflows/Ruby%20Tests/badge.svg)](https://github.com/davidesantangelo/hyll/actions)
 
-Hyll is a Ruby implementation of the [HyperLogLog algorithm](https://en.wikipedia.org/wiki/HyperLogLog) for the count-distinct problem, which efficiently approximates the number of distinct elements in a multiset with minimal memory usage. It supports both standard and P4 variants, offering a flexible approach for large-scale applications and providing convenient methods for merging, serialization, and maximum likelihood estimation.
+Hyll is a Ruby implementation of the [HyperLogLog algorithm](https://en.wikipedia.org/wiki/HyperLogLog) for the count-distinct problem, which efficiently approximates the number of distinct elements in a multiset with minimal memory usage. It supports both standard and Enhanced variants, offering a flexible approach for large-scale applications and providing convenient methods for merging, serialization, and maximum likelihood estimation.
 
 > The name "Hyll" is a shortened form of "HyperLogLog", keeping the characteristic "H" and "LL" sounds.
 
@@ -65,14 +65,11 @@ puts hll.cardinality  # Output: approximately 1000
 
 ```ruby
 # Standard HyperLogLog (default)
-standard_hll = Hyll.new(type: :standard)
+standard_hll = Hyll.new(type: :standard) # You can also use :hll as an alias for :standard
 
-# P4HyperLogLog (Presto-compatible implementation)
-p4_hll = Hyll.new(type: :p4)
 
-# You can also use :hll as an alias for :standard
-# and :presto as an alias for :p4
-presto_hll = Hyll.new(type: :presto)
+# EnhancedHyperLogLog
+enhanced_hll = Hyll.new(type: :enhanced)
 ```
 
 ### Adding Multiple Elements
@@ -110,22 +107,30 @@ puts hll.maximum_likelihood_cardinality
 puts hll.mle_cardinality
 ```
 
-### Using P4HyperLogLog Format
+### Using EnhancedHyperLogLog Format
 
-P4HyperLogLog is a strictly dense format similar to Facebook's Presto implementation:
+EnhancedHyperLogLog a strictly enhanced version of HyperLogLog with additional features - inspired by Presto's P4HYPERLOGLOG:
 
 ```ruby
-# Create a P4HyperLogLog directly
-p4 = Hyll.new(type: :p4)
-p4.add_all(["apple", "banana", "cherry"])
+# Create a EnhancedHyperLogLog directly
+enhanced = Hyll.new(type: :enhanced)
+enhanced.add_all(["apple", "banana", "cherry"])
 
-# Convert from standard HyperLogLog to P4HyperLogLog
+# Convert from standard HyperLogLog to EnhancedHyperLogLog
 hll = Hyll.new
 hll.add_all(["apple", "banana", "cherry"])
-p4 = hll.to_p4
+enhanced = hll.to_enhanced
 
-# Convert from P4HyperLogLog to standard HyperLogLog
-hll = p4.to_hll
+# Convert from EnhancedHyperLogLog to standard HyperLogLog
+hll = enhanced.to_hll
+
+# Use the streaming cardinality estimator for improved accuracy
+# This implementation is based on the martingale estimator from Daniel Ting's paper
+streaming_estimate = enhanced.cardinality(use_streaming: true)
+
+# Get variance and confidence intervals for the streaming estimate
+variance = enhanced.streaming_variance
+bounds = enhanced.streaming_error_bounds(confidence: 0.95) # 95% confidence interval
 ```
 
 ### Serialization and Deserialization
@@ -148,7 +153,7 @@ restored_hll = Hyll.deserialize(data)
 ```ruby
 # Using the Factory directly for advanced use cases
 empty_standard = Hyll::Factory.create(type: :standard, precision: 12)
-empty_p4 = Hyll::Factory.create(type: :p4, precision: 14)
+empty_enhanced = Hyll::Factory.create(type: :enhanced, precision: 14)
 
 # Or use the simple module method
 empty_hll = Hyll.new(precision: 12)
@@ -186,8 +191,8 @@ This table compares different configurations of the HyperLogLog algorithm:
 | 12        | 32.0 KB      | ~1.625%    | ~10B         | Standard       |
 | 14        | 128.0 KB     | ~0.8125%   | ~100B        | Standard       |
 | 16        | 512.0 KB     | ~0.4%      | ~1T          | Standard       |
-| 10        | 9.0 KB       | ~3.25%     | ~1B          | P4 (Presto)    |
-| 12        | 36.0 KB      | ~1.625%    | ~10B         | P4 (Presto)    |
+| 10        | 9.0 KB       | ~3.25%     | ~1B          | Enhanced       |
+| 12        | 36.0 KB      | ~1.625%    | ~10B         | Enhanced       |
 
 ### Comparison with Other Cardinality Estimators
 
@@ -206,9 +211,9 @@ Below are actual performance measurements from an Apple Mac Mini M4 with 24GB RA
 | Operation               | Implementation       | Time (seconds) | Items/Operations |
 | ----------------------- | -------------------- | -------------- | ---------------- |
 | Element Addition        | Standard HyperLogLog | 0.0176         | 10,000 items     |
-| Element Addition        | P4HyperLogLog        | 0.0109         | 10,000 items     |
+| Element Addition        | EnhancedHyperLogLog        | 0.0109         | 10,000 items     |
 | Cardinality Calculation | Standard HyperLogLog | 0.0011         | 10 calculations  |
-| Cardinality Calculation | P4HyperLogLog        | 0.0013         | 10 calculations  |
+| Cardinality Calculation | EnhancedHyperLogLog        | 0.0013         | 10 calculations  |
 | Serialization           | Standard HyperLogLog | 0.0003         | 10 operations    |
 | Deserialization         | Standard HyperLogLog | 0.0005         | 10 operations    |
 
@@ -227,7 +232,8 @@ These benchmarks demonstrate HyperLogLog's exceptional memory efficiency, mainta
 - Memory-efficient register storage with 4-bit packing (inspired by Facebook's Presto implementation)
 - Sparse representation for small cardinalities
 - Dense representation for larger datasets
-- P4HyperLogLog format for compatibility with other systems
+- EnhancedHyperLogLog format for compatibility with other systems
+- Streaming martingale estimator for improved accuracy with EnhancedHyperLogLog
 - Maximum Likelihood Estimation for improved accuracy
 - Merge and serialization capabilities
 - Factory pattern for creating and deserializing counters
@@ -238,7 +244,7 @@ Hyll offers two main implementations:
 
 1. **Standard HyperLogLog**: Optimized for accuracy and memory efficiency, uses sparse format for small cardinalities and dense format with 4-bit packing for larger sets.
 
-2. **P4HyperLogLog**: A strictly dense format similar to Facebook's Presto P4HYPERLOGLOG type, where "P4" refers to the 4-bit precision per register. This format is slightly less memory-efficient but offers better compatibility with other HyperLogLog implementations.
+2. **EnhancedHyperLogLog**: A strictly dense format similar to Facebook's Presto P4HYPERLOGLOG type, where "P4" refers to the 4-bit precision per register. This format is slightly less memory-efficient but offers better compatibility with other HyperLogLog implementations. It also includes a streaming martingale estimator that can provide up to 1.56x better accuracy for the same memory usage.
 
 The internal architecture follows a modular approach:
 
@@ -246,7 +252,7 @@ The internal architecture follows a modular approach:
 - `Hyll::Utils::Hash`: Hash functions for element processing
 - `Hyll::Utils::Math`: Mathematical operations for HyperLogLog calculations
 - `Hyll::HyperLogLog`: The standard implementation
-- `Hyll::P4HyperLogLog`: The Presto-compatible implementation
+- `Hyll::EnhancedHyperLogLog`: The enhanced implementation
 - `Hyll::Factory`: Factory pattern for creating counters
 
 ## Examples
@@ -275,7 +281,7 @@ For a comprehensive overview of all features, see `examples/basic.rb` which incl
 - Custom precision settings
 - Merging counters
 - Serialization
-- P4HyperLogLog usage
+- EnhancedHyperLogLog usage
 - Batch operations
 - Large dataset handling
 - Set operations
@@ -295,6 +301,7 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 - Original HyperLogLog paper: ["HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm"](https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) by Philippe Flajolet, Éric Fusy, Olivier Gandouet, and Frédéric Meunier (2007).
 - Improved bias correction: ["HyperLogLog in Practice: Algorithmic Engineering of a State of the Art Cardinality Estimation Algorithm"](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/40671.pdf) by Stefan Heule, Marc Nunkesser, and Alexander Hall (2013).
+- Streaming cardinality estimation: ["Streamed Approximate Counting of Distinct Elements: Beating Optimal Batch Methods"](https://research.facebook.com/publications/streamed-approximate-counting-of-distinct-elements/) by Daniel Ting (2014).
 - Facebook's Presto implementation details: ["HyperLogLog in Presto: A significantly faster way to handle cardinality estimation"](https://engineering.fb.com/2018/12/13/data-infrastructure/hyperloglog/) by Mehrdad Honarkhah and Arya Talebzadeh.
 
 ## Contributing

@@ -9,7 +9,7 @@ RSpec.describe "HyperLogLog Performance", :performance do
   let(:precision) { 10 }
   let(:element_count) { 10_000 }
   let(:hll) { Hyll::HyperLogLog.new(precision) }
-  let(:p4hll) { Hyll::P4HyperLogLog.new(precision) }
+  let(:enhancedhll) { Hyll::EnhancedHyperLogLog.new(precision) }
 
   it "has good add performance for HyperLogLog" do
     time = Benchmark.realtime do
@@ -21,14 +21,14 @@ RSpec.describe "HyperLogLog Performance", :performance do
     puts "HyperLogLog add performance: #{time} seconds for #{element_count} items"
   end
 
-  it "has good add performance for P4HyperLogLog" do
+  it "has good add performance for EnhancedHyperLogLog" do
     time = Benchmark.realtime do
-      element_count.times { |i| p4hll.add("item-#{i}") }
+      element_count.times { |i| enhancedhll.add("item-#{i}") }
     end
 
     # This is just a guideline - adjust based on actual performance
     expect(time).to be < 2.0 # Should add 10,000 items in under 2 seconds
-    puts "P4HyperLogLog add performance: #{time} seconds for #{element_count} items"
+    puts "EnhancedHyperLogLog add performance: #{time} seconds for #{element_count} items"
   end
 
   it "has good cardinality calculation performance for HyperLogLog" do
@@ -43,16 +43,16 @@ RSpec.describe "HyperLogLog Performance", :performance do
     puts "HyperLogLog cardinality calculation performance: #{time} seconds for 10 calculations"
   end
 
-  it "has good cardinality calculation performance for P4HyperLogLog" do
-    element_count.times { |i| p4hll.add("item-#{i}") }
+  it "has good cardinality calculation performance for EnhancedHyperLogLog" do
+    element_count.times { |i| enhancedhll.add("item-#{i}") }
 
     time = Benchmark.realtime do
-      10.times { p4hll.cardinality }
+      10.times { enhancedhll.cardinality }
     end
 
     # This is just a guideline - adjust based on actual performance
     expect(time).to be < 0.1 # Should calculate cardinality 10 times in under 0.1 seconds
-    puts "P4HyperLogLog cardinality calculation performance: #{time} seconds for 10 calculations"
+    puts "EnhancedHyperLogLog cardinality calculation performance: #{time} seconds for 10 calculations"
   end
 
   it "has good serialization/deserialization performance" do

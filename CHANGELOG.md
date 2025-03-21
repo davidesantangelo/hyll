@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Delta encoding against baseline values
   - Overflow handling for outlier register values
 - Maximum Likelihood Estimation (MLE) for improved accuracy
-- P4HyperLogLog implementation for compatibility with Facebook's Presto
+- EnhancedHyperLogLog enhanced version of HyperLogLog with additional features
 - Merge functionality for combining multiple HyperLogLog counters
 - Serialization and deserialization support
 - Auto-detection and correction for sequential integer inputs
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `count` for integer cardinality
   - `mle_cardinality` as an alias for maximum likelihood estimation
   - Factory method `empty` for creating empty counters
-  - Format conversion methods `to_p4` and `to_hll`
+  - Format conversion methods `to_enhanced` and `to_hll`
 - Comprehensive test suite with edge case handling
 
 ## About the Release Date

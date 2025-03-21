@@ -427,7 +427,7 @@ module Hyll
 
       # Handle case where other is a standard HyperLogLog in exact counting mode
       if other.is_a?(HyperLogLog) &&
-         !other.is_a?(P4HyperLogLog) &&
+         !other.is_a?(EnhancedHyperLogLog) &&
          other.instance_variable_get(:@using_exact_counting)
 
         other_small_set = other.instance_variable_get(:@small_set)
@@ -452,7 +452,7 @@ module Hyll
     # Helper method to get register value from other HLL
     # @private
     def get_other_register_value(other, index)
-      if other.is_a?(P4HyperLogLog)
+      if other.is_a?(EnhancedHyperLogLog)
         other.instance_variable_get(:@registers)[index]
       else
         other.send(:get_register_value, index)
@@ -617,27 +617,27 @@ module Hyll
       hll
     end
 
-    # Convert to a strictly dense format (P4HyperLogLog)
-    # @return [P4HyperLogLog] a strictly dense version
-    def to_p4
-      p4 = P4HyperLogLog.new(@precision)
+    # Convert to a strictly dense format (EnhancedHyperLogLog)
+    # @return [EnhancedHyperLogLog] a strictly dense version
+    def to_enhanced
+      enhanced = EnhancedHyperLogLog.new(@precision)
 
       if @using_exact_counting
         # Convert sparse to dense
-        @small_set.each_key { |e| p4.add(e) }
+        @small_set.each_key { |e| enhanced.add(e) }
       else
         # Copy registers
         @m.times do |i|
           value = get_register_value(i)
-          p4.instance_variable_get(:@registers)[i] = value
+          enhanced.instance_variable_get(:@registers)[i] = value
         end
-        p4.instance_variable_set(:@is_sequential, @is_sequential)
+        enhanced.instance_variable_set(:@is_sequential, @is_sequential)
       end
 
       # Mark as converted from standard format
-      p4.instance_variable_set(:@converted_from_standard, true)
+      enhanced.instance_variable_set(:@converted_from_standard, true)
 
-      p4
+      enhanced
     end
 
     private

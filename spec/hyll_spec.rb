@@ -413,13 +413,13 @@ RSpec.describe Hyll do
         expect(hll.cardinality).to be_within(1).of(0)
       end
 
-      it "converts to P4HyperLogLog format" do
+      it "converts to EnhancedHyperLogLog format" do
         hll = Hyll::HyperLogLog.new(10)
         (1..100).each { |i| hll.add(i) }
 
-        p4 = hll.to_p4
-        expect(p4).to be_a(Hyll::P4HyperLogLog)
-        expect(p4.cardinality).to be_within(1).of(hll.cardinality)
+        enhanced = hll.to_enhanced
+        expect(enhanced).to be_a(Hyll::EnhancedHyperLogLog)
+        expect(enhanced.cardinality).to be_within(1).of(hll.cardinality)
       end
     end
 
@@ -516,63 +516,62 @@ RSpec.describe Hyll do
     end
   end
 
-  describe Hyll::P4HyperLogLog do
-    let(:p4) { Hyll::P4HyperLogLog.new(10) }
+  describe Hyll::EnhancedHyperLogLog do
+    let(:enhanced) { Hyll::EnhancedHyperLogLog.new(10) }
 
     it "initializes with the specified precision" do
-      expect(p4.precision).to eq(10)
+      expect(enhanced.precision).to eq(10)
     end
 
     it "always uses dense format" do
-      expect(p4.instance_variable_get(:@using_exact_counting)).to be false
+      expect(enhanced.instance_variable_get(:@using_exact_counting)).to be false
     end
 
     it "estimates cardinality accurately" do
-      (1..100).each { |i| p4.add(i) }
-      expect(p4.cardinality).to be_within(15).of(100) # Slightly wider error margin
+      (1..100).each { |i| enhanced.add(i) }
+      expect(enhanced.cardinality).to be_within(15).of(100) # Slightly wider error margin
     end
 
     it "can convert back to standard HyperLogLog" do
-      (1..100).each { |i| p4.add(i) }
+      (1..100).each { |i| enhanced.add(i) }
 
-      hll = p4.to_hll
+      hll = enhanced.to_hll
       expect(hll).to be_a(Hyll::HyperLogLog)
-      expect(hll.cardinality).to be_within(15).of(p4.cardinality) # Wider margin
+      expect(hll.cardinality).to be_within(15).of(enhanced.cardinality) # Wider margin
     end
 
     it "serializes and deserializes correctly" do
-      (1..100).each { |i| p4.add(i) }
+      (1..100).each { |i| enhanced.add(i) }
 
-      serialized = p4.serialize
-      restored = Hyll::P4HyperLogLog.deserialize(serialized)
+      serialized = enhanced.serialize
+      restored = Hyll::EnhancedHyperLogLog.deserialize(serialized)
 
-      expect(restored).to be_a(Hyll::P4HyperLogLog)
-      expect(restored.cardinality).to be_within(1).of(p4.cardinality)
+      expect(restored).to be_a(Hyll::EnhancedHyperLogLog)
+      expect(restored.cardinality).to be_within(1).of(enhanced.cardinality)
     end
 
-    it "merges with other P4HyperLogLog instances" do
-      p4a = Hyll::P4HyperLogLog.new(10)
-      p4b = Hyll::P4HyperLogLog.new(10)
+    it "merges with other EnhancedHyperLogLog instances" do
+      enhanceda = Hyll::EnhancedHyperLogLog.new(10)
+      enhancedb = Hyll::EnhancedHyperLogLog.new(10)
 
-      (1..500).each { |i| p4a.add(i) }
-      (401..900).each { |i| p4b.add(i) }
+      (1..500).each { |i| enhanceda.add(i) }
+      (401..900).each { |i| enhancedb.add(i) }
 
-      p4a.merge(p4b)
-      # Allow for a wider error margin with P4 format - Presto implementation has
-      # different bias correction than our reference
-      expect(p4a.cardinality).to be_within(300).of(900)
+      enhanceda.merge(enhancedb)
+
+      expect(enhanceda.cardinality).to be_within(300).of(900)
     end
 
     it "merges with standard HyperLogLog instances" do
-      p4 = Hyll::P4HyperLogLog.new(10)
+      enhanced = Hyll::EnhancedHyperLogLog.new(10)
       hll = Hyll::HyperLogLog.new(10)
 
-      (1..500).each { |i| p4.add(i) }
+      (1..500).each { |i| enhanced.add(i) }
       (401..900).each { |i| hll.add(i) }
 
-      p4.merge(hll)
-      # Allow for a wider error margin with P4 format
-      expect(p4.cardinality).to be_within(300).of(900)
+      enhanced.merge(hll)
+      # Allow for a wider error margin with Enhanced format
+      expect(enhanced.cardinality).to be_within(300).of(900)
     end
   end
 end

@@ -23,9 +23,9 @@ end
 def intersection_example
   puts "=== Intersection Estimation Example ==="
 
-  # Create two HyperLogLog counters
-  hll1 = Hyll.new(precision: 12)
-  hll2 = Hyll.new(precision: 12)
+  # Create two HyperLogLog counters with higher precision for better accuracy
+  hll1 = Hyll.new(precision: 14)
+  hll2 = Hyll.new(precision: 14)
 
   # Add elements with controlled overlap (30% overlap)
   total_items = 100_000
@@ -41,19 +41,40 @@ def intersection_example
   union = hll1.to_p4
   union.merge(hll2)
 
-  # Calculate intersection using inclusion-exclusion principle
-  # |A ∩ B| = |A| + |B| - |A ∪ B|
+  # Calculate intersection using inclusion-exclusion principle with standard estimates
   estimate1 = hll1.cardinality
   estimate2 = hll2.cardinality
   union_estimate = union.cardinality
   intersection_estimate = estimate1 + estimate2 - union_estimate
 
-  puts "Set A cardinality: #{estimate1.round}"
-  puts "Set B cardinality: #{estimate2.round}"
-  puts "Union cardinality: #{union_estimate.round}"
-  puts "Estimated intersection: #{intersection_estimate.round}"
+  # Alternative calculation using maximum likelihood estimation for better accuracy
+  mle_estimate1 = hll1.maximum_likelihood_cardinality
+  mle_estimate2 = hll2.maximum_likelihood_cardinality
+  mle_union_estimate = union.maximum_likelihood_cardinality
+  mle_intersection_estimate = mle_estimate1 + mle_estimate2 - mle_union_estimate
+
+  # Apply bias correction for intersection estimates
+  # Intersection estimates often have larger relative error than individual cardinality estimates
+  correction_factor = 0.95 # Slight adjustment to reduce overestimation
+  corrected_intersection = intersection_estimate * correction_factor
+
+  # Calculate average of different estimation methods for better results
+  combined_intersection = (corrected_intersection + mle_intersection_estimate) / 2.0
+
+  puts "Set A cardinality: #{estimate1.round} (MLE: #{mle_estimate1.round})"
+  puts "Set B cardinality: #{estimate2.round} (MLE: #{mle_estimate2.round})"
+  puts "Union cardinality: #{union_estimate.round} (MLE: #{mle_union_estimate.round})"
+  puts "Estimated intersection:"
+  puts "  - Basic: #{intersection_estimate.round}"
+  puts "  - MLE: #{mle_intersection_estimate.round}"
+  puts "  - Corrected: #{corrected_intersection.round}"
+  puts "  - Combined: #{combined_intersection.round}"
   puts "Actual intersection: #{overlap}"
-  puts "Error rate: #{((intersection_estimate - overlap).abs / overlap * 100).round(2)}%"
+  puts "Error rates:"
+  puts "  - Basic: #{((intersection_estimate - overlap).abs / overlap * 100).round(2)}%"
+  puts "  - MLE: #{((mle_intersection_estimate - overlap).abs / overlap * 100).round(2)}%"
+  puts "  - Corrected: #{((corrected_intersection - overlap).abs / overlap * 100).round(2)}%"
+  puts "  - Combined: #{((combined_intersection - overlap).abs / overlap * 100).round(2)}%"
   puts "\n"
 end
 

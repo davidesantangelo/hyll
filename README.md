@@ -1,5 +1,7 @@
 # Hyll
 
+![Gem Version](https://img.shields.io/gem/v/hyll)
+![Gem Total Downloads](https://img.shields.io/gem/dt/hyll)
 [![Build Status](https://github.com/davidesantangelo/hyll/workflows/Ruby%20Tests/badge.svg)](https://github.com/davidesantangelo/hyll/actions)
 
 Hyll is a Ruby implementation of the [HyperLogLog algorithm](https://en.wikipedia.org/wiki/HyperLogLog) for the count-distinct problem, which efficiently approximates the number of distinct elements in a multiset with minimal memory usage. It supports both standard and Enhanced variants, offering a flexible approach for large-scale applications and providing convenient methods for merging, serialization, and maximum likelihood estimation.

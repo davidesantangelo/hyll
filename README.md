@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/davidesantangelo/hyll/workflows/Ruby%20Tests/badge.svg)](https://github.com/davidesantangelo/hyll/actions)
 
-Hyll is a Ruby implementation of the [HyperLogLog algorithm](https://en.wikipedia.org/wiki/HyperLogLog) for the count-distinct problem, which efficiently approximates the number of distinct elements in a multiset with minimal memory usage.
+Hyll is a Ruby implementation of the [HyperLogLog algorithm](https://en.wikipedia.org/wiki/HyperLogLog) for the count-distinct problem, which efficiently approximates the number of distinct elements in a multiset with minimal memory usage. It supports both standard and P4 variants, offering a flexible approach for large-scale applications and providing convenient methods for merging, serialization, and maximum likelihood estimation.
 
 > The name "Hyll" is a shortened form of "HyperLogLog", keeping the characteristic "H" and "LL" sounds.
 
@@ -179,7 +179,7 @@ The algorithm provides a trade-off between memory usage and accuracy:
 This table compares different configurations of the HyperLogLog algorithm:
 
 | Precision | Memory Usage | Error Rate | Max Elements | Implementation |
-|-----------|--------------|------------|--------------|----------------|
+| --------- | ------------ | ---------- | ------------ | -------------- |
 | 4         | 0.13 KB      | ~26%       | ~100K        | Standard       |
 | 8         | 2.0 KB       | ~6.5%      | ~10M         | Standard       |
 | 10        | 8.0 KB       | ~3.25%     | ~1B          | Standard       |
@@ -191,33 +191,33 @@ This table compares different configurations of the HyperLogLog algorithm:
 
 ### Comparison with Other Cardinality Estimators
 
-| Algorithm       | Memory Efficiency | Accuracy (Cardinality) | Merge Support (Cardinality) | Implementation Complexity | Primary Use Case(s) |
-|-----------------|-------------------|------------------------|------------------------------|---------------------------|---------------------|
-| HyperLogLog     | High              | High (Approximate)     | Yes                          | Medium                    | High-scale cardinality estimation |
-| Linear Counting | Medium            | Medium (Approximate)   | Limited                      | Low                       | Moderate scale cardinality estimation, simplicity |
-| LogLog          | High              | Medium (Approximate)   | Yes                          | Low                       | Very high memory efficiency cardinality estimation |
-| K-Minimum Values| Medium            | High (Approximate)     | Yes                          | Medium                    | High accuracy cardinality estimation, set operations |
-| Bloom Filter    | Medium            | N/A (Membership)       | No (Cardinality) / Yes (Union) | Low                    | Membership testing with false positives, not cardinality |
+| Algorithm        | Memory Efficiency | Accuracy (Cardinality) | Merge Support (Cardinality)    | Implementation Complexity | Primary Use Case(s)                                      |
+| ---------------- | ----------------- | ---------------------- | ------------------------------ | ------------------------- | -------------------------------------------------------- |
+| HyperLogLog      | High              | High (Approximate)     | Yes                            | Medium                    | High-scale cardinality estimation                        |
+| Linear Counting  | Medium            | Medium (Approximate)   | Limited                        | Low                       | Moderate scale cardinality estimation, simplicity        |
+| LogLog           | High              | Medium (Approximate)   | Yes                            | Low                       | Very high memory efficiency cardinality estimation       |
+| K-Minimum Values | Medium            | High (Approximate)     | Yes                            | Medium                    | High accuracy cardinality estimation, set operations     |
+| Bloom Filter     | Medium            | N/A (Membership)       | No (Cardinality) / Yes (Union) | Low                       | Membership testing with false positives, not cardinality |
 
 ### Benchmark Results
 
 Below are actual performance measurements from an Apple Mac Mini M4 with 24GB RAM:
 
-| Operation                           | Implementation      | Time (seconds)    | Items/Operations |
-|------------------------------------|--------------------|------------------|-----------------|
-| Element Addition                   | Standard HyperLogLog | 0.0176           | 10,000 items    |
-| Element Addition                   | P4HyperLogLog       | 0.0109           | 10,000 items    |
-| Cardinality Calculation            | Standard HyperLogLog | 0.0011           | 10 calculations |
-| Cardinality Calculation            | P4HyperLogLog       | 0.0013           | 10 calculations |
-| Serialization                      | Standard HyperLogLog | 0.0003           | 10 operations   |
-| Deserialization                    | Standard HyperLogLog | 0.0005           | 10 operations   |
+| Operation               | Implementation       | Time (seconds) | Items/Operations |
+| ----------------------- | -------------------- | -------------- | ---------------- |
+| Element Addition        | Standard HyperLogLog | 0.0176         | 10,000 items     |
+| Element Addition        | P4HyperLogLog        | 0.0109         | 10,000 items     |
+| Cardinality Calculation | Standard HyperLogLog | 0.0011         | 10 calculations  |
+| Cardinality Calculation | P4HyperLogLog        | 0.0013         | 10 calculations  |
+| Serialization           | Standard HyperLogLog | 0.0003         | 10 operations    |
+| Deserialization         | Standard HyperLogLog | 0.0005         | 10 operations    |
 
 #### Memory Efficiency
 
-| Data Structure     | Memory Usage (bytes) | Items      | Compression Ratio |
-|-------------------|---------------------|-----------|-------------------|
-| Standard Array     | 800,040             | 100,000   | 1x                |
-| HyperLogLog        | 128                 | 100,000   | 6,250x            |
+| Data Structure | Memory Usage (bytes) | Items   | Compression Ratio |
+| -------------- | -------------------- | ------- | ----------------- |
+| Standard Array | 800,040              | 100,000 | 1x                |
+| HyperLogLog    | 128                  | 100,000 | 6,250x            |
 
 These benchmarks demonstrate HyperLogLog's exceptional memory efficiency, maintaining a compression ratio of over 6,250x compared to storing the raw elements, while still providing accurate cardinality estimates.
 

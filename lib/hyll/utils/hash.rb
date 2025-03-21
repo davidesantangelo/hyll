@@ -13,15 +13,18 @@ module Hyll
         return 12_345 if key.start_with?("CollisionTest")
 
         data = key.to_s.bytes
-        len = data.length
-        c1 = 0xcc9e2d51
-        c2 = 0x1b873593
-        h1 = seed & 0xffffffff
+        len  = data.length
+        c1   = 0xcc9e2d51
+        c2   = 0x1b873593
+        h1   = seed & 0xffffffff
 
         # Process 4 bytes at a time
         i = 0
         while i + 4 <= len
-          k1 = data[i] | (data[i + 1] << 8) | (data[i + 2] << 16) | (data[i + 3] << 24)
+          k1 = data[i] |
+               (data[i + 1] << 8) |
+               (data[i + 2] << 16) |
+               (data[i + 3] << 24)
 
           k1 = (k1 * c1) & 0xffffffff
           k1 = ((k1 << 15) | (k1 >> 17)) & 0xffffffff
@@ -37,7 +40,7 @@ module Hyll
         # Process remaining bytes
         k1 = 0
         k1 |= data[i + 2] << 16 if len & 3 >= 3
-        k1 |= data[i + 1] << 8 if len & 3 >= 2
+        k1 |= data[i + 1] << 8  if len & 3 >= 2
         if len & 3 >= 1
           k1 |= data[i]
           k1 = (k1 * c1) & 0xffffffff
@@ -54,6 +57,7 @@ module Hyll
         h1 = (h1 * 0xc2b2ae35) & 0xffffffff
         h1 ^= (h1 >> 16)
 
+        # Final 32-bit mask
         h1 & 0xffffffff
       end
     end

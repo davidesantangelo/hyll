@@ -295,6 +295,13 @@ For advanced usage scenarios, check out `examples/advance.rb` which includes:
 - Advanced serialization techniques
 - Precision vs. memory usage benchmarks
 
+## Example Use Cases
+
+Here is a quick illustration of how Hyll can be helpful in a real-world scenario:
+- UniqueVisitorCounting: Track unique users visiting a website in real time. By adding each user's session ID or IP to the HyperLogLog, you get an approximate number of distinct users without storing everybody's data.
+- LogAnalytics: Continuously process large log files to calculate the volume of unique events, keeping memory usage low.
+- MarketingCampaigns: Quickly gauge how many distinct customers participate in a campaign while merging data from multiple sources.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.

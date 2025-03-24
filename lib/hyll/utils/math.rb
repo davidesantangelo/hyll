@@ -67,6 +67,10 @@ module Hyll
       # @param k_max [Integer] maximum k
       # @return [Array<Float>] array of h(x/2^k) values
       def calculate_h_values(x, k_min, k_max)
+        # Guard against invalid inputs
+        return [] if k_min > k_max
+        return [0.0] * (k_max - k_min + 1) if x.zero? || x.nan? || x.infinite?
+
         # Determine the smallest power of 2 denominator for which we need h(x)
         power = k_max
 
@@ -79,11 +83,17 @@ module Hyll
         # For small arguments, use more accurate formula (simpler approximation)
         h = if x_prime <= 0.1
               # For very small values, h(x) ≈ x/2
-              # This formula ensures we get consistent value across different inputs and powers
               x_prime / 2.0
             elsif x_prime <= 0.5
               # Use more accurate Taylor series for small-to-medium values
-              x_prime / 2.0 - (x_prime**2) / 12.0 + (x_prime**4) / 720.0 - (x_prime**6) / 30_240.0
+              taylor_sum = x_prime / 2.0
+              term = x_prime * x_prime
+              taylor_sum -= term / 12.0
+              term *= x_prime * x_prime
+              taylor_sum += term / 720.0
+              term *= x_prime * x_prime
+              taylor_sum -= term / 30_240.0
+              taylor_sum
             else
               # For larger values, directly compute
               1.0 - ::Math.exp(-x_prime)
@@ -95,7 +105,13 @@ module Hyll
         # Calculate subsequent h values using recurrence relation
         1.upto(k_max - k_min) do |i|
           x_prime *= 2.0 # Double x_prime
-          h = (x_prime + h * (1.0 - h)) / (x_prime + (1.0 - h))
+          denominator = x_prime + (1.0 - h)
+          # Avoid division by zero
+          h = if denominator.abs < Float::EPSILON
+                h_values[i - 1] # Use previous value if unstable
+              else
+                (x_prime + h * (1.0 - h)) / denominator
+              end
           h_values[i] = h
         end
 

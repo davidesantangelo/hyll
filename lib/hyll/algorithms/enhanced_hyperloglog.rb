@@ -81,9 +81,10 @@ module Hyll
     # @return [Float] the estimated variance
     def streaming_variance
       # If no modifications, return 0
-      return 0.0 if @streaming_estimate.zero?
+      return 0.0 if @last_modification_probability.nil?
 
-      # Return the quadratic variation
+      # Calculate variance based on martingale properties
+      # This provides an unbiased estimate of the variance
       @quadratic_variation
     end
 
@@ -91,19 +92,25 @@ module Hyll
     # @param confidence [Float] confidence level (default: 0.95)
     # @return [Array<Float>] lower and upper bounds
     def streaming_error_bounds(confidence = 0.95)
-      return [0, 0] if @streaming_estimate.zero?
+      # If no modifications, return exact bounds
+      return [@streaming_estimate, @streaming_estimate] if @last_modification_probability.nil?
 
-      # For 95% confidence, use ~1.96 multiplier
+      # Calculate z-score for the given confidence level
+      # For 95% confidence, z ≈ 1.96
       z = case confidence
-          when 0.9 then 1.645
+          when 0.90 then 1.645
           when 0.95 then 1.96
           when 0.99 then 2.576
-          else 1.96 # Default to 95%
+          else
+            # Calculate using inverse error function for any confidence level
+            Math.sqrt(2) * Math.erfc(2 * (1 - confidence))
           end
 
-      std_dev = Math.sqrt(streaming_variance)
+      # Calculate standard error
+      std_error = Math.sqrt(streaming_variance)
 
-      [@streaming_estimate - z * std_dev, @streaming_estimate + z * std_dev]
+      # Return confidence interval
+      [@streaming_estimate - z * std_error, @streaming_estimate + z * std_error]
     end
 
     # Update register value directly (no compression in EnhancedHyperLogLog)

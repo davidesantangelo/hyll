@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    hyll (0.1.1)
+    hyll (0.2.0)
       digest (~> 3.1)
 
 GEM

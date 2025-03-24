@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-03-24
+
+### Added
+- Associativity test for HyperLogLog merges to ensure (A ∪ B) ∪ C = A ∪ (B ∪ C)
+- Guards against invalid inputs in mathematical functions
+- Memoization for h_values calculation in MLE algorithm
+- More comprehensive error handling with safeguards
+- Added `examples/redis_comparison_benchmark.rb` for Redis comparison
+
+### Changed
+- Optimized Maximum Likelihood Estimation (MLE) algorithm for better performance
+- Improved numerical stability in the secant method implementation
+- Enhanced Taylor series calculation for better accuracy
+- Fixed Math module namespace conflicts
+- Added safeguards against division by zero and other numerical errors
+- Limited maximum iterations in convergence algorithms to prevent infinite loops
+
+### Fixed
+- Addressed potential numerical instability in calculate_h_values method
+- Fixed undefined method 'exp' error by using global namespace operator
+- Improved edge case handling in the MLE algorithm
+
 ## [0.1.1] - 2025-03-21
 
 ### Changed

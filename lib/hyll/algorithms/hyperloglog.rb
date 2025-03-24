@@ -280,17 +280,27 @@ module Hyll
                            non_zero_registers_count / weighted_sum * Math.log(1 + weighted_sum / zero_registers_count)
                          end
 
+      # Return early for edge cases to avoid numerical instability
+      return initial_estimate * @m if initial_estimate.zero? || initial_estimate.nan? || initial_estimate.infinite?
+
       # Precision parameter
       epsilon = 0.01
       delta = epsilon / Math.sqrt(@m)
 
-      # Secant method iteration
+      # Memoize h_values calculation to avoid redundant computation
+      h_values_cache = {}
+
+      # Secant method iteration - limit max iterations to prevent infinite loops
       delta_x = initial_estimate
       g_prev = 0
+      max_iterations = 100
+      iterations = 0
 
-      while delta_x > initial_estimate * delta
-        # Calculate h(x) efficiently
-        h_values = calculate_h_values(initial_estimate, min_value, max_value)
+      while delta_x > initial_estimate * delta && iterations < max_iterations
+        iterations += 1
+
+        # Calculate h(x) efficiently with memoization
+        h_values = h_values_cache[initial_estimate] ||= calculate_h_values(initial_estimate, min_value, max_value)
 
         # Calculate the function value
         g = 0.0
@@ -299,12 +309,14 @@ module Hyll
         end
         g += initial_estimate * (weighted_sum + zero_registers_count)
 
-        # Update the estimate using secant method
-        delta_x = if g > g_prev && non_zero_registers_count >= g
-                    delta_x * (non_zero_registers_count - g) / (g - g_prev)
-                  else
-                    0
-                  end
+        # Update the estimate using secant method with safeguards
+        if g > g_prev && non_zero_registers_count >= g && (g - g_prev).abs > Float::EPSILON
+          delta_x = delta_x * (non_zero_registers_count - g) / (g - g_prev)
+          # Add safeguard against too large steps
+          delta_x = [delta_x, initial_estimate].min
+        else
+          delta_x = 0
+        end
 
         initial_estimate += delta_x
         g_prev = g
